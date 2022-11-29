@@ -803,7 +803,7 @@ export const Editable = (props: EditableProps) => {
     })
   })
 
-  const className = useMemo(
+  const minHeightClassName = useMemo(
     () =>
       `slate-editable-${crypto.getRandomValues(new Uint32Array(4)).join('-')}`,
     []
@@ -815,6 +815,8 @@ export const Editable = (props: EditableProps) => {
       styleElement.remove()
     }
   }, [])
+
+  const [computedMinHeight, setComputedMinHeight] = useState(false)
 
   useEffect(() => {
     styleElement.innerHTML = ''
@@ -839,17 +841,9 @@ export const Editable = (props: EditableProps) => {
       .join(',')})`
 
     styleElement.innerHTML =
-      `.${className} {` +
-      `min-height: ${minHeight};` +
-      // Allow positioning relative to the editable element.
-      `position: relative;` +
-      // Prevent the default outline styles.
-      `outline: none;` +
-      // Preserve adjacent whitespace and new lines.
-      `white-space: pre-wrap;` +
-      // Allow words to break if they are too long.
-      `word-wrap: break-word;` +
-      `}`
+      `.${minHeightClassName} {` + `min-height: ${minHeight};` + `}`
+
+    if (!computedMinHeight) setComputedMinHeight(true)
   })
 
   return (
@@ -861,9 +855,11 @@ export const Editable = (props: EditableProps) => {
             aria-multiline={readOnly ? undefined : true}
             {...attributes}
             className={
-              attributes.className
-                ? `${className} ${attributes.className}`
-                : className
+              computedMinHeight
+                ? attributes.className
+                  ? `${minHeightClassName} ${attributes.className}`
+                  : minHeightClassName
+                : attributes.className
             }
             // COMPAT: Certain browsers don't support the `beforeinput` event, so we'd
             // have to use hacks to make these replacement-based features work.
@@ -895,7 +891,17 @@ export const Editable = (props: EditableProps) => {
             zindex={-1}
             suppressContentEditableWarning
             ref={ref}
-            style={style}
+            style={{
+              // Allow positioning relative to the editable element.
+              position: 'relative',
+              // Prevent the default outline styles.
+              outline: 'none',
+              // Preserve adjacent whitespace and new lines.
+              whiteSpace: 'pre-wrap',
+              // Allow words to break if they are too long.
+              wordWrap: 'break-word',
+              ...style,
+            }}
             onBeforeInput={useCallback(
               (event: React.FormEvent<HTMLDivElement>) => {
                 // COMPAT: Certain browsers don't support the `beforeinput` event, so we
