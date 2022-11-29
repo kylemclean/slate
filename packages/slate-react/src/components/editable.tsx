@@ -808,18 +808,18 @@ export const Editable = (props: EditableProps) => {
       `slate-editable-${crypto.getRandomValues(new Uint32Array(4)).join('-')}`,
     []
   )
-  const [styleElement] = useState(document.createElement('style'))
+  const [minHeightStyleElement] = useState(document.createElement('style'))
   useEffect(() => {
-    document.head.appendChild(styleElement)
+    document.head.appendChild(minHeightStyleElement)
     return () => {
-      styleElement.remove()
+      minHeightStyleElement.remove()
     }
   }, [])
 
   const [computedMinHeight, setComputedMinHeight] = useState(false)
 
   useEffect(() => {
-    styleElement.innerHTML = ''
+    minHeightStyleElement.innerHTML = ''
 
     const computedMinHeight =
       ref.current instanceof HTMLDivElement
@@ -836,14 +836,19 @@ export const Editable = (props: EditableProps) => {
     const placeholderHeight = placeholderElement
       ? `${placeholderElement.clientHeight}px`
       : undefined
-    const minHeight = `max(${[definedMinHeight, placeholderHeight]
-      .filter(height => height)
-      .join(',')})`
+    const heightsToConsider = [definedMinHeight, placeholderHeight].filter(
+      height => height
+    )
+    const minHeight =
+      heightsToConsider.length > 0
+        ? `max(${heightsToConsider.join(',')})`
+        : undefined
 
-    styleElement.innerHTML =
-      `.${minHeightClassName} {` + `min-height: ${minHeight};` + `}`
+    if (minHeight) {
+      minHeightStyleElement.innerHTML = `.${minHeightClassName}{min-height:${minHeight};}`
 
-    if (!computedMinHeight) setComputedMinHeight(true)
+      if (!computedMinHeight) setComputedMinHeight(true)
+    }
   })
 
   return (
