@@ -41,11 +41,9 @@ const Leaf = (props: {
       return
     }
 
-    editorEl.style.minHeight = `${placeholderEl.clientHeight}px`
     EDITOR_TO_PLACEHOLDER_ELEMENT.set(editor, placeholderEl)
 
     return () => {
-      editorEl.style.minHeight = 'auto'
       EDITOR_TO_PLACEHOLDER_ELEMENT.delete(editor)
     }
   }, [placeholderRef, leaf])

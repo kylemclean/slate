@@ -55,6 +55,7 @@ import {
   EDITOR_TO_ELEMENT,
   EDITOR_TO_FORCE_RENDER,
   EDITOR_TO_PENDING_INSERTION_MARKS,
+  EDITOR_TO_PLACEHOLDER_ELEMENT,
   EDITOR_TO_USER_MARKS,
   EDITOR_TO_USER_SELECTION,
   EDITOR_TO_WINDOW,
@@ -802,6 +803,24 @@ export const Editable = (props: EditableProps) => {
     })
   })
 
+  const [minHeight, setMinHeight] = useState<string | undefined>(undefined)
+  useEffect(() => {
+    // Set the minimum height to the taller of the defined minHeight or the placeholder height.
+    const definedMinHeight =
+      ref.current instanceof HTMLDivElement
+        ? getComputedStyle(ref.current).minHeight
+        : undefined
+    const placeholderHeight = EDITOR_TO_PLACEHOLDER_ELEMENT.get(editor)
+      ?.clientHeight
+    setMinHeight(
+      definedMinHeight && placeholderHeight
+        ? `max(${definedMinHeight}, ${placeholderHeight}px)`
+        : placeholderHeight
+        ? `${placeholderHeight}px`
+        : definedMinHeight
+    )
+  })
+
   return (
     <ReadOnlyContext.Provider value={readOnly}>
       <DecorateContext.Provider value={decorate}>
@@ -849,8 +868,10 @@ export const Editable = (props: EditableProps) => {
               whiteSpace: 'pre-wrap',
               // Allow words to break if they are too long.
               wordWrap: 'break-word',
-              // Allow for passed-in styles to override anything.
+              // Allow for passed-in styles to override anything...
               ...style,
+              // ...except for minHeight, to prevent the placeholder from being cut off.
+              minHeight,
             }}
             onBeforeInput={useCallback(
               (event: React.FormEvent<HTMLDivElement>) => {
