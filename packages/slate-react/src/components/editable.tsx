@@ -139,10 +139,10 @@ export const Editable = (props: EditableProps) => {
     renderLeaf,
     renderPlaceholder = props => <DefaultPlaceholder {...props} />,
     scrollSelectionIntoView = defaultScrollSelectionIntoView,
-    style = {},
     as: Component = 'div',
     ...attributes
   } = props
+  const { minHeight: inlineMinHeightProp, ...style } = props.style ?? {}
   const editor = useSlate()
   // Rerender editor when composition status changed
   const [isComposing, setIsComposing] = useState(false)
@@ -803,22 +803,53 @@ export const Editable = (props: EditableProps) => {
     })
   })
 
-  const [minHeight, setMinHeight] = useState<string | undefined>(undefined)
+  const className = useMemo(
+    () =>
+      `slate-editable-${crypto.getRandomValues(new Uint32Array(4)).join('-')}`,
+    []
+  )
+  const [styleElement] = useState(document.createElement('style'))
   useEffect(() => {
-    // Set the minimum height to the taller of the defined minHeight or the placeholder height.
-    const definedMinHeight =
+    document.head.appendChild(styleElement)
+    return () => {
+      styleElement.remove()
+    }
+  }, [])
+
+  useEffect(() => {
+    styleElement.innerHTML = ''
+
+    const computedMinHeight =
       ref.current instanceof HTMLDivElement
         ? getComputedStyle(ref.current).minHeight
         : undefined
-    const placeholderHeight = EDITOR_TO_PLACEHOLDER_ELEMENT.get(editor)
-      ?.clientHeight
-    setMinHeight(
-      definedMinHeight && placeholderHeight
-        ? `max(${definedMinHeight}, ${placeholderHeight}px)`
-        : placeholderHeight
-        ? `${placeholderHeight}px`
-        : definedMinHeight
-    )
+    const inlineMinHeight =
+      typeof inlineMinHeightProp === 'number'
+        ? `${inlineMinHeightProp}px`
+        : typeof inlineMinHeightProp === 'string'
+        ? inlineMinHeightProp
+        : undefined
+    const definedMinHeight = inlineMinHeight || computedMinHeight
+    const placeholderElement = EDITOR_TO_PLACEHOLDER_ELEMENT.get(editor)
+    const placeholderHeight = placeholderElement
+      ? `${placeholderElement.clientHeight}px`
+      : undefined
+    const minHeight = `max(${[definedMinHeight, placeholderHeight]
+      .filter(height => height)
+      .join(',')})`
+
+    styleElement.innerHTML =
+      `.${className} {` +
+      `min-height: ${minHeight};` +
+      // Allow positioning relative to the editable element.
+      `position: relative;` +
+      // Prevent the default outline styles.
+      `outline: none;` +
+      // Preserve adjacent whitespace and new lines.
+      `white-space: pre-wrap;` +
+      // Allow words to break if they are too long.
+      `word-wrap: break-word;` +
+      `}`
   })
 
   return (
@@ -829,6 +860,11 @@ export const Editable = (props: EditableProps) => {
             role={readOnly ? undefined : 'textbox'}
             aria-multiline={readOnly ? undefined : true}
             {...attributes}
+            className={
+              attributes.className
+                ? `${className} ${attributes.className}`
+                : className
+            }
             // COMPAT: Certain browsers don't support the `beforeinput` event, so we'd
             // have to use hacks to make these replacement-based features work.
             // For SSR situations HAS_BEFORE_INPUT_SUPPORT is false and results in prop
@@ -859,20 +895,7 @@ export const Editable = (props: EditableProps) => {
             zindex={-1}
             suppressContentEditableWarning
             ref={ref}
-            style={{
-              // Allow positioning relative to the editable element.
-              position: 'relative',
-              // Prevent the default outline styles.
-              outline: 'none',
-              // Preserve adjacent whitespace and new lines.
-              whiteSpace: 'pre-wrap',
-              // Allow words to break if they are too long.
-              wordWrap: 'break-word',
-              // Allow for passed-in styles to override anything...
-              ...style,
-              // ...except for minHeight, to prevent the placeholder from being cut off.
-              minHeight,
-            }}
+            style={style}
             onBeforeInput={useCallback(
               (event: React.FormEvent<HTMLDivElement>) => {
                 // COMPAT: Certain browsers don't support the `beforeinput` event, so we
