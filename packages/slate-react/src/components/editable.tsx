@@ -127,6 +127,23 @@ export type EditableProps = {
   as?: React.ElementType
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
+const editorDefaultStyles: React.CSSProperties = {
+  // Allow positioning relative to the editable element.
+  position: 'relative',
+  // Prevent the default outline styles.
+  outline: 'none',
+  // Preserve adjacent whitespace and new lines.
+  whiteSpace: 'pre-wrap',
+  // Allow words to break if they are too long.
+  wordWrap: 'break-word',
+}
+
+const editorDefaultStylesString =
+  `position: relative;` +
+  `outline: none;` +
+  `white-space: pre-wrap;` +
+  `word-wrap: break-word;`
+
 /**
  * Editable.
  */
@@ -815,17 +832,12 @@ export const Editable = (props: EditableProps) => {
       defaultStylesElement.nonce = getCSPNonce()
       defaultStylesElement.setAttribute('data-slate-default-styles', 'true')
       const selector = '[data-slate-editor]'
-      const defaultStyles =
-        // Allow positioning relative to the editable element.
-        `position: relative;` +
-        // Prevent the default outline styles.
-        `outline: none;` +
-        // Preserve adjacent whitespace and new lines.
-        `white-space: pre-wrap;` +
-        // Allow words to break if they are too long.
-        `word-wrap: break-word;`
-      defaultStylesElement.innerHTML = whereIfSupported(selector, defaultStyles)
-      defaultStylesElement.onsecuritypolicyviolation = handleSecurityPolicyViolation
+      defaultStylesElement.innerHTML = whereIfSupported(
+        selector,
+        editorDefaultStylesString
+      )
+      defaultStylesElement.onsecuritypolicyviolation = event =>
+        handleSecurityPolicyViolation(event, editor, setDefaultInlineStyles)
       document.head.appendChild(defaultStylesElement)
     }
 
@@ -839,16 +851,21 @@ export const Editable = (props: EditableProps) => {
 
   useEffect(() => {
     const styleElement = document.createElement('style')
+    EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
     styleElement.nonce = getCSPNonce()
-    styleElement.onsecuritypolicyviolation = handleSecurityPolicyViolation
+    styleElement.onsecuritypolicyviolation = event =>
+      handleSecurityPolicyViolation(event, editor, setDefaultInlineStyles)
     document.head.appendChild(styleElement)
 
-    EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
     return () => {
       styleElement.remove()
       EDITOR_TO_STYLE_ELEMENT.delete(editor)
     }
   }, [])
+
+  const [defaultInlineStyles, setDefaultInlineStyles] = useState<
+    React.CSSProperties
+  >({})
 
   return (
     <ReadOnlyContext.Provider value={readOnly}>
@@ -889,7 +906,10 @@ export const Editable = (props: EditableProps) => {
             zindex={-1}
             suppressContentEditableWarning
             ref={ref}
-            style={style}
+            style={{
+              ...defaultInlineStyles,
+              ...style,
+            }}
             onBeforeInput={useCallback(
               (event: React.FormEvent<HTMLDivElement>) => {
                 // COMPAT: Certain browsers don't support the `beforeinput` event, so we
@@ -1775,10 +1795,16 @@ const getCSPNonce = () =>
  * default <style> elements.
  */
 const handleSecurityPolicyViolation = (
-  _event: SecurityPolicyViolationEvent
+  _event: SecurityPolicyViolationEvent,
+  editor: ReactEditor,
+  setDefaultInlineStyles: React.Dispatch<
+    React.SetStateAction<React.CSSProperties>
+  >
 ) => {
+  setDefaultInlineStyles(editorDefaultStyles)
+  EDITOR_TO_STYLE_ELEMENT.delete(editor)
   // eslint-disable-next-line no-console
   console.warn(
-    'Slate: A Content Security Policy is preventing Slate from setting default styles for its editors. See: https://docs.slatejs.org/concepts/11-security'
+    "Slate: A Content Security Policy is preventing Slate's default <style> elements from affecting its editors. Instead, inline style attributes are being used to provide default styles for editors, but this might prevent your own style classes from overriding them. To fix this, see https://docs.slatejs.org/concepts/07-editor#styling"
   )
 }

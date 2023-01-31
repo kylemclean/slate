@@ -6,6 +6,7 @@ import {
   PLACEHOLDER_SYMBOL,
   EDITOR_TO_PLACEHOLDER_ELEMENT,
   EDITOR_TO_STYLE_ELEMENT,
+  EDITOR_TO_ELEMENT,
 } from '../utils/weak-maps'
 import { RenderLeafProps, RenderPlaceholderProps } from './editable'
 import { useSlateStatic } from '../hooks/use-slate-static'
@@ -69,6 +70,13 @@ const Leaf = (props: {
           const selector = `[data-slate-editor-id="${editor.id}"]`
           const styles = `min-height: ${target.clientHeight}px;`
           styleElement.innerHTML = whereIfSupported(selector, styles)
+          console.log('setting min-height on style element')
+        } else {
+          const editorElement = EDITOR_TO_ELEMENT.get(editor)
+          if (editorElement) {
+            editorElement.style.minHeight = `${target.clientHeight}px`
+            console.log('setting min-height on editor element')
+          }
         }
       })
 

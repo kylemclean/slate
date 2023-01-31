@@ -133,3 +133,33 @@ for (const point of Editor.positions(editor)) {
 ```
 
 > 🤖 For more info, check out the [Editor Static Methods API Reference](../api/nodes/editor.md#static-methods)
+
+## Styling
+
+You can apply custom styles to the editor component using CSS. Passing a `className` or `style` prop to the component will override the default styles. For example:
+
+```jsx
+const MyEditor = () => {
+  const [editor] = useState(() => withReact(createEditor()))
+  return (
+    <Slate
+      editor={editor}
+      className="fancy"
+      style="background-color: green; color: white;"
+    >
+      <Toolbar />
+      <Editable />
+    </Slate>
+  )
+}
+```
+
+### Content Security Policy Warning
+
+Slate injects `<style>` elements into your page in order to provide editors with some default styles. This won't work if your page has a Content Security Policy that prevents scripts from adding `<style>` elements. However, even if this happens, Slate will fall back to using inline `style` attributes on the editor element. This means editors should still have default styles, but in some edge cases it could interfere with your attempts to apply custom styles.
+
+To resolve this issue, you can do any of the following:
+
+- Nothing. If the styles that Slate sets don't interfere with your custom styles, then everything should work properly.
+- Loosen the CSP for `style-src-elem`. Setting it to `unsafe-inline` will resolve this issue, but will weaken security.
+- Provide a nonce on the page for Slate to with its `<style>` elements. If you are server-side rendering your pages, inject a `<meta name="csp-nonce" content="NONCE">` tag into the `<head>` of pages that an editor appears on, replacing `NONCE` with a random base64 string. Then, ensure that your CSP contains the directive `style-src-elem 'nonce NONCE';`.
