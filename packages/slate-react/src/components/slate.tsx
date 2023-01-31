@@ -22,6 +22,7 @@ export const Slate = (props: {
   value: Descendant[]
   children: React.ReactNode
   onChange?: (value: Descendant[]) => void
+  cspNonce?: string
 }) => {
   const { editor, children, onChange, value, ...rest } = props
   const unmountRef = useRef(false)
@@ -41,7 +42,7 @@ export const Slate = (props: {
     }
     editor.children = value
     Object.assign(editor, rest)
-    return { v: 0, editor }
+    return { v: 0, editor, cspNonce: props.cspNonce }
   })
 
   const {

@@ -25,7 +25,7 @@ import useChildren from '../hooks/use-children'
 import { DecorateContext } from '../hooks/use-decorate'
 import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
 import { ReadOnlyContext } from '../hooks/use-read-only'
-import { useSlate } from '../hooks/use-slate'
+import { useSlateWithCspNonce } from '../hooks/use-slate'
 import { TRIPLE_CLICK } from '../utils/constants'
 import {
   DOMElement,
@@ -163,7 +163,7 @@ export const Editable = (props: EditableProps) => {
     as: Component = 'div',
     ...attributes
   } = props
-  const editor = useSlate()
+  const { editor, cspNonce } = useSlateWithCspNonce()
   // Rerender editor when composition status changed
   const [isComposing, setIsComposing] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -829,7 +829,7 @@ export const Editable = (props: EditableProps) => {
     if (mountedCount === 1) {
       // Set global default styles for editors.
       const defaultStylesElement = document.createElement('style')
-      defaultStylesElement.nonce = getCSPNonce()
+      if (cspNonce) defaultStylesElement.nonce = cspNonce
       defaultStylesElement.setAttribute('data-slate-default-styles', 'true')
       const selector = '[data-slate-editor]'
       defaultStylesElement.innerHTML = whereIfSupported(
@@ -852,7 +852,7 @@ export const Editable = (props: EditableProps) => {
   useEffect(() => {
     const styleElement = document.createElement('style')
     EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
-    styleElement.nonce = getCSPNonce()
+    if (cspNonce) styleElement.nonce = cspNonce
     styleElement.onsecuritypolicyviolation = event =>
       handleSecurityPolicyViolation(event, editor, setDefaultInlineStyles)
     document.head.appendChild(styleElement)
@@ -1779,16 +1779,6 @@ export const isDOMEventHandled = <E extends Event>(
 
   return event.defaultPrevented
 }
-
-/**
- * Get the nonce value to use for generated stylesheet elements from the
- * <meta> element with the name "csp-nonce".
- * If no such element exists, return undefined.
- */
-
-const getCSPNonce = () =>
-  document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') ??
-  undefined
 
 /**
  * Handler for securitypolicyviolation events that are triggered by adding

@@ -10,31 +10,12 @@ import { ReactEditor } from '../plugin/react-editor'
 export interface SlateContextValue {
   v: number
   editor: ReactEditor
+  cspNonce?: string
 }
 
-export const SlateContext = createContext<{
-  v: number
-  editor: ReactEditor
-} | null>(null)
+export const SlateContext = createContext<SlateContextValue | null>(null)
 
-/**
- * Get the current editor object from the React context.
- */
-
-export const useSlate = (): Editor => {
-  const context = useContext(SlateContext)
-
-  if (!context) {
-    throw new Error(
-      `The \`useSlate\` hook must be used inside the <Slate> component's context.`
-    )
-  }
-
-  const { editor } = context
-  return editor
-}
-
-export const useSlateWithV = () => {
+const getContext = (): SlateContextValue => {
   const context = useContext(SlateContext)
 
   if (!context) {
@@ -44,4 +25,23 @@ export const useSlateWithV = () => {
   }
 
   return context
+}
+
+/**
+ * Get the current editor object from the React context.
+ */
+
+export const useSlate = (): Editor => getContext().editor
+
+export const useSlateWithV = (): { editor: Editor; v: number } => {
+  const { editor, v } = getContext()
+  return { editor, v }
+}
+
+export const useSlateWithCspNonce = (): {
+  editor: Editor
+  cspNonce?: string
+} => {
+  const { editor, cspNonce } = getContext()
+  return { editor, cspNonce }
 }
