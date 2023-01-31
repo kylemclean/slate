@@ -812,6 +812,7 @@ export const Editable = (props: EditableProps) => {
     if (mountedCount === 1) {
       // Set global default styles for editors.
       const defaultStylesElement = document.createElement('style')
+      defaultStylesElement.nonce = getCSPNonce()
       defaultStylesElement.setAttribute('data-slate-default-styles', 'true')
       const selector = '[data-slate-editor]'
       const defaultStyles =
@@ -838,6 +839,7 @@ export const Editable = (props: EditableProps) => {
 
   useEffect(() => {
     const styleElement = document.createElement('style')
+    styleElement.nonce = getCSPNonce()
     document.head.appendChild(styleElement)
     EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
     return () => {
@@ -1755,3 +1757,13 @@ export const isDOMEventHandled = <E extends Event>(
 
   return event.defaultPrevented
 }
+
+/**
+ * Get the nonce value to use for generated stylesheet elements from the
+ * <meta> element with the name "csp-nonce".
+ * If no such element exists, return undefined.
+ */
+
+const getCSPNonce = () =>
+  document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') ??
+  undefined
