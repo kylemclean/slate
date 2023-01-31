@@ -65,7 +65,6 @@ const Leaf = (props: {
       placeholderResizeObserver.current = new ResizeObserver(() => {
         // Force a re-render of the editor so its min-height can be updated
         // to the new height of the placeholder.
-        console.log('placeholder resized, re-rendering')
         const forceRender = EDITOR_TO_FORCE_RENDER.get(editor)
         forceRender?.()
       })
@@ -75,7 +74,6 @@ const Leaf = (props: {
     if (!placeholderEl && lastPlaceholderRef.current) {
       // No placeholder element, so no need for a resize observer.
       // Force a re-render of the editor so its min-height can be reset.
-      console.log('no placeholder element, re-rendering')
       const forceRender = EDITOR_TO_FORCE_RENDER.get(editor)
       forceRender?.()
     }

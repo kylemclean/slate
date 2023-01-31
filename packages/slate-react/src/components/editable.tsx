@@ -121,21 +121,12 @@ export type EditableProps = {
   renderPlaceholder?: (props: RenderPlaceholderProps) => JSX.Element
   scrollSelectionIntoView?: (editor: ReactEditor, domRange: DOMRange) => void
   as?: React.ElementType
+  disableDefaultStyles?: boolean
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
 /**
  * Editable.
  */
-
-const defaultStyles =
-  // Allow positioning relative to the editable element.
-  `position: relative;` +
-  // Prevent the default outline styles.
-  `outline: none;` +
-  // Preserve adjacent whitespace and new lines.
-  `white-space: pre-wrap;` +
-  // Allow words to break if they are too long.
-  `word-wrap: break-word;`
 
 export const Editable = (props: EditableProps) => {
   const {
@@ -150,6 +141,7 @@ export const Editable = (props: EditableProps) => {
     scrollSelectionIntoView = defaultScrollSelectionIntoView,
     style: userStyle = {},
     as: Component = 'div',
+    disableDefaultStyles = false,
     ...attributes
   } = props
   const editor = useSlate()
@@ -815,7 +807,6 @@ export const Editable = (props: EditableProps) => {
   const placeholderHeight = EDITOR_TO_PLACEHOLDER_ELEMENT.get(
     editor
   )?.getBoundingClientRect()?.height
-  console.log('rendering editor')
 
   return (
     <ReadOnlyContext.Provider value={readOnly}>
@@ -856,16 +847,22 @@ export const Editable = (props: EditableProps) => {
             suppressContentEditableWarning
             ref={ref}
             style={{
-              // Allow positioning relative to the editable element.
-              position: 'relative',
-              // Prevent the default outline styles.
-              outline: 'none',
-              // Preserve adjacent whitespace and new lines.
-              whiteSpace: 'pre-wrap',
-              // Allow words to break if they are too long.
-              wordWrap: 'break-word',
-              // Make the minimum height that of the placeholder.
-              ...(placeholderHeight ? { minHeight: placeholderHeight } : {}),
+              ...(disableDefaultStyles
+                ? {}
+                : {
+                    // Allow positioning relative to the editable element.
+                    position: 'relative',
+                    // Prevent the default outline styles.
+                    outline: 'none',
+                    // Preserve adjacent whitespace and new lines.
+                    whiteSpace: 'pre-wrap',
+                    // Allow words to break if they are too long.
+                    wordWrap: 'break-word',
+                    // Make the minimum height that of the placeholder.
+                    ...(placeholderHeight
+                      ? { minHeight: placeholderHeight }
+                      : {}),
+                  }),
               // Allow for passed-in styles to override anything.
               ...userStyle,
             }}

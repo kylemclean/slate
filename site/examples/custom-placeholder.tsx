@@ -15,6 +15,13 @@ const PlainTextExample = () => {
   return (
     <Slate editor={editor} value={initialValue}>
       <Editable
+        // style={{
+        //   backgroundColor: 'orange',
+        //   minHeight: '200px',
+        //   outline: '2px solid green',
+        // }}
+        // disableDefaultStyles
+        // className="epic"
         placeholder="Type something"
         renderPlaceholder={({ children, attributes }) => (
           <div {...attributes}>

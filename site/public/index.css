@@ -78,3 +78,13 @@ iframe {
 [data-slate-editor] > * + * {
   margin-top: 1em;
 }
+
+/* .fancy {
+  background-color: rgb(218, 225, 255);
+  padding: 1em;
+  font-size: 1.25em;
+  min-height: 150px;
+  outline: 3px dashed rgb(0, 94, 128);
+  border-radius: 1em;
+  outline-offset: -1em;
+} */
