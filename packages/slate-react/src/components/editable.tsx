@@ -54,7 +54,7 @@ import {
   EDITOR_TO_ELEMENT,
   EDITOR_TO_FORCE_RENDER,
   EDITOR_TO_PENDING_INSERTION_MARKS,
-  EDITOR_TO_STYLE_ELEMENT,
+  EDITOR_TO_PLACEHOLDER_ELEMENT,
   EDITOR_TO_USER_MARKS,
   EDITOR_TO_USER_SELECTION,
   EDITOR_TO_WINDOW,
@@ -66,7 +66,6 @@ import {
   NODE_TO_ELEMENT,
   PLACEHOLDER_SYMBOL,
 } from '../utils/weak-maps'
-import { whereIfSupported } from '../utils/where-if-supported'
 import { RestoreDOM } from './restore-dom/restore-dom'
 import { useAndroidInputManager } from '../hooks/android-input-manager/use-android-input-manager'
 import { useTrackUserInput } from '../hooks/use-track-user-input'
@@ -76,9 +75,6 @@ type DeferredOperation = () => void
 const Children = (props: Parameters<typeof useChildren>[0]) => (
   <React.Fragment>{useChildren(props)}</React.Fragment>
 )
-
-// The number of Editable components currently mounted.
-let mountedCount = 0
 
 /**
  * `RenderElementProps` are passed to the `renderElement` handler.
@@ -131,6 +127,16 @@ export type EditableProps = {
  * Editable.
  */
 
+const defaultStyles =
+  // Allow positioning relative to the editable element.
+  `position: relative;` +
+  // Prevent the default outline styles.
+  `outline: none;` +
+  // Preserve adjacent whitespace and new lines.
+  `white-space: pre-wrap;` +
+  // Allow words to break if they are too long.
+  `word-wrap: break-word;`
+
 export const Editable = (props: EditableProps) => {
   const {
     autoFocus,
@@ -142,7 +148,7 @@ export const Editable = (props: EditableProps) => {
     renderLeaf,
     renderPlaceholder = props => <DefaultPlaceholder {...props} />,
     scrollSelectionIntoView = defaultScrollSelectionIntoView,
-    style = {},
+    style: userStyle = {},
     as: Component = 'div',
     ...attributes
   } = props
@@ -806,45 +812,10 @@ export const Editable = (props: EditableProps) => {
     })
   })
 
-  useEffect(() => {
-    mountedCount++
-
-    if (mountedCount === 1) {
-      // Set global default styles for editors.
-      const defaultStylesElement = document.createElement('style')
-      defaultStylesElement.setAttribute('data-slate-default-styles', 'true')
-      const selector = '[data-slate-editor]'
-      const defaultStyles =
-        // Allow positioning relative to the editable element.
-        `position: relative;` +
-        // Prevent the default outline styles.
-        `outline: none;` +
-        // Preserve adjacent whitespace and new lines.
-        `white-space: pre-wrap;` +
-        // Allow words to break if they are too long.
-        `word-wrap: break-word;`
-      defaultStylesElement.innerHTML = whereIfSupported(selector, defaultStyles)
-
-      document.head.appendChild(defaultStylesElement)
-    }
-
-    return () => {
-      mountedCount--
-
-      if (mountedCount <= 0)
-        document.querySelector('style[data-slate-default-styles]')?.remove()
-    }
-  }, [])
-
-  useEffect(() => {
-    const styleElement = document.createElement('style')
-    document.head.appendChild(styleElement)
-    EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
-    return () => {
-      styleElement.remove()
-      EDITOR_TO_STYLE_ELEMENT.delete(editor)
-    }
-  }, [])
+  const placeholderHeight = EDITOR_TO_PLACEHOLDER_ELEMENT.get(
+    editor
+  )?.getBoundingClientRect()?.height
+  console.log('rendering editor')
 
   return (
     <ReadOnlyContext.Provider value={readOnly}>
@@ -875,7 +846,6 @@ export const Editable = (props: EditableProps) => {
                 : 'false'
             }
             data-slate-editor
-            data-slate-editor-id={editor.id}
             data-slate-node="value"
             // explicitly set this
             contentEditable={!readOnly}
@@ -885,7 +855,20 @@ export const Editable = (props: EditableProps) => {
             zindex={-1}
             suppressContentEditableWarning
             ref={ref}
-            style={style}
+            style={{
+              // Allow positioning relative to the editable element.
+              position: 'relative',
+              // Prevent the default outline styles.
+              outline: 'none',
+              // Preserve adjacent whitespace and new lines.
+              whiteSpace: 'pre-wrap',
+              // Allow words to break if they are too long.
+              wordWrap: 'break-word',
+              // Make the minimum height that of the placeholder.
+              ...(placeholderHeight ? { minHeight: placeholderHeight } : {}),
+              // Allow for passed-in styles to override anything.
+              ...userStyle,
+            }}
             onBeforeInput={useCallback(
               (event: React.FormEvent<HTMLDivElement>) => {
                 // COMPAT: Certain browsers don't support the `beforeinput` event, so we
