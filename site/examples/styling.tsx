@@ -20,9 +20,9 @@ const StylingExample = () => {
       >
         <Editable
           style={{
-            backgroundColor: '#ffe69c',
+            backgroundColor: 'rgb(255, 230, 156)',
             minHeight: '200px',
-            outline: '2px solid green',
+            outline: 'rgb(0, 128, 0) solid 2px',
           }}
         />
       </Slate>

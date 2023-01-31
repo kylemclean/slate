@@ -79,12 +79,13 @@ iframe {
   margin-top: 1em;
 }
 
-/* .fancy {
+.fancy {
   background-color: rgb(218, 225, 255);
-  padding: 1em;
-  font-size: 1.25em;
+  padding: 40px;
+  font-size: 20px;
   min-height: 150px;
   outline: 3px dashed rgb(0, 94, 128);
-  border-radius: 1em;
-  outline-offset: -1em;
-} */
+  border-radius: 20px;
+  outline-offset: -20px;
+  white-space: pre-wrap;
+}
