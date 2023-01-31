@@ -825,7 +825,7 @@ export const Editable = (props: EditableProps) => {
         // Allow words to break if they are too long.
         `word-wrap: break-word;`
       defaultStylesElement.innerHTML = whereIfSupported(selector, defaultStyles)
-
+      defaultStylesElement.onsecuritypolicyviolation = handleSecurityPolicyViolation
       document.head.appendChild(defaultStylesElement)
     }
 
@@ -840,7 +840,9 @@ export const Editable = (props: EditableProps) => {
   useEffect(() => {
     const styleElement = document.createElement('style')
     styleElement.nonce = getCSPNonce()
+    styleElement.onsecuritypolicyviolation = handleSecurityPolicyViolation
     document.head.appendChild(styleElement)
+
     EDITOR_TO_STYLE_ELEMENT.set(editor, styleElement)
     return () => {
       styleElement.remove()
@@ -1767,3 +1769,16 @@ export const isDOMEventHandled = <E extends Event>(
 const getCSPNonce = () =>
   document.querySelector('meta[name="csp-nonce"]')?.getAttribute('content') ??
   undefined
+
+/**
+ * Handler for securitypolicyviolation events that are triggered by adding
+ * default <style> elements.
+ */
+const handleSecurityPolicyViolation = (
+  _event: SecurityPolicyViolationEvent
+) => {
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Slate: A Content Security Policy is preventing Slate from setting default styles for its editors. See: https://docs.slatejs.org/concepts/11-security'
+  )
+}
