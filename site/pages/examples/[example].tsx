@@ -281,6 +281,10 @@ const ExamplePage = ({ example }: { example: string }) => {
             rel="stylesheet"
             href="https://fonts.googleapis.com/icon?family=Material+Icons"
           />
+          <meta
+            httpEquiv="Content-Security-Policy"
+            content="style-src https://fonts.googleapis.com 'self' 'nonce-333';"
+          />
         </Head>
         <Header>
           <Title>Slate Examples</Title>

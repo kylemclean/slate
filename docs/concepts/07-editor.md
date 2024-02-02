@@ -162,4 +162,4 @@ To resolve this issue, you can do any of the following:
 
 - Nothing. If the styles that Slate sets don't interfere with your custom styles, then everything should work properly.
 - Loosen the CSP for `style-src-elem`. Setting it to `unsafe-inline` will resolve this issue, but will weaken security.
-- Provide a nonce on the page for Slate to with its `<style>` elements. If you are server-side rendering your pages, inject a `<meta name="csp-nonce" content="NONCE">` tag into the `<head>` of pages that an editor appears on, replacing `NONCE` with a random base64 string. Then, ensure that your CSP contains the directive `style-src-elem 'nonce NONCE';`.
+- Provide a nonce on the page for Slate to with its `<style>` elements. Generate a random base64 string to use as a non tag into the `<head>` of pages that an editor appears on, replacing `NONCE` with a random base64 string. Then, ensure that your CSP contains the directive `style-src-elem 'nonce NONCE';`.
